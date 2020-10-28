@@ -10,7 +10,7 @@ const sequelize = new Sequelize("postgres", "postgres", "1234", {
 });
 stdin.addListener("data", function(d) {
 	input = d.toString().replace(/\s+/g, ' ').trim().split(' ');
-	for (let i=0; i < input.length; i++) {
+	for (let i = 0; i < input.length; i++) {
 		input[i] = parseInt(input[i], 10);
 	}
 	output = bubble(input);
@@ -28,8 +28,7 @@ function bubble(arr) {
 			}
 		}
 	}
-	console.log(zet, ' => ', arr);
-	res.create({input: arr, output: zet});
+	res.create({input: zet, output: arr});
 	return arr;
 }
 
@@ -51,9 +50,21 @@ const res = sequelize.define("res", {
 });
 
 sequelize.query('CREATE TABLE IF NOT EXISTS res (id SERIAL, input integer[], output integer[]);');
-// sequelize.query('INSERT INTO res (input, output) VALUES (ARRAY[5, 1, 3, 4, 2]::INTEGER[], ARRAY[1, 2, 3, 4, 5]::INTEGER[])');
-// sequelize
-//   .query('SELECT * FROM res', { raw: true })
-//   .then(res => {
-//     console.log(res[0])
-//   })
+
+const express = require("express");
+const app = express();
+let server = require('http').createServer(app);
+let io = require('socket.io').listen(server);
+app.set("view engine", "hbs");
+app.get('/', function(request, response) {
+	response.render("index.hbs", {
+    title: "Test",
+  });
+});
+app.use(express.static('public'));
+io.sockets.on('connection', function (socket) {
+	socket.on('send input', function (data) {
+		io.sockets.emit('send output', {array: bubble(data.array)});
+	});
+});
+server.listen(4000);
